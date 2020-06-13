@@ -12,7 +12,9 @@ public:
     ~Player();
 
     void DebugInfo(); 
-
+    Vector2 Position();
+    uint8_t Color();
+    uint16_t Size_();
 private:
     uint8_t color;
     uint16_t size;

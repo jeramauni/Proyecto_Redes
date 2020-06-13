@@ -12,6 +12,21 @@ Player::~Player()
 
 }
 
+Vector2 Player::Position()
+{
+    return position;
+}
+
+uint8_t Player::Color()
+{
+    return color;
+}
+
+uint16_t Player::Size_()
+{
+    return size;
+}
+
 void Player::DebugInfo()
 {
     std::cout << "Position: (" << position.x << ", " << position.y << ")\n";

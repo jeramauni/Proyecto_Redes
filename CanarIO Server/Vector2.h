@@ -14,26 +14,26 @@ class Vector2
     {
         x = _x;
         y = _y;
-    }
+    };
     
-    ~Vector2() {}
+    ~Vector2() {};
 
-    /*Vector2& operator = (const Vector2 &vec_new);
+    Vector2& operator = (const Vector2 &vec_new)
     {
-        x = vec_new->x;
-        y = vec_new->y;
+        x = vec_new.x;
+        y = vec_new.y;
 
         return *this;
     }
-    
-    bool operator == (const Vector2 &vec_1, const Vector2 &vec_2);
+/*    
+    bool operator == (const Vector2& vec_1, const Vector2& vec_2) const
     {
-        return (vec_1->x == vec_2->x && vec_1->y == vec_2->y)
+        return (vec_1.x == vec_2.x && vec_1.y == vec_2.y);
     }
 
     ostream& operator << (ostream& os, const Vector2& v)
     {
-        os << "{ " << v.x << ", " << v.y << "}";
+        //os << "{ " << v.x << ", " << v.y << "}";
         return os;
     }*/
 };

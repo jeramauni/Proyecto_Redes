@@ -45,34 +45,31 @@ int ChatMessage::from_bin(char * bobj)
 void ChatServer::do_messages()
 {
     XLDisplay::init(720, 480, "CanarIO-server");
-    XLDisplay& dpy = XLDisplay::display();
+    XLDisplay *dpy;
     while (true)
     {
         
         Socket* client_Socket;
         ChatMessage message_Client;
 
-        std::cout << "Cantidad de usuarios: " << clients.size() << "\n";
+        std::cout << "Cantidad de usuarios: " << clients_player.size() << "\n";
 
         int err = socket.recv(message_Client, client_Socket);
 
         bool is_old_user = false;
         auto client_position = clients.begin();
         auto it = clients.begin();
-        //auto client_Player_Position = clients_player.begin();
-        //auto it_p = clients_player.begin();
+        auto client_Player_Position = clients_player.begin();
+        auto it_p = clients_player.begin();
         while( it != clients.end() && !is_old_user)
         {
-            std::cout << "123123d \n";
             if(*(*it) == *client_Socket)
             {
-                std::cout << "Csdasd \n";
                 is_old_user = true;
                 client_position = it;
-                //client_Player_Position = it_p;
+                client_Player_Position = it_p;
             }
-            std::cout << "1001213asd \n";
-            //it_p++;
+            it_p++;
             it++;
         }
 
@@ -90,7 +87,7 @@ void ChatServer::do_messages()
                         Vector2 pos = Vector2((uint16_t)0, (uint16_t)200 * clients_player.size());
                         Player* new_Player = new Player(pos, (uint16_t)30, (uint8_t)2);
                         clients.push_back(client_Socket);
-                        //clients_player.push_back(new_Player);
+                        clients_player.push_back(new_Player);
                         std::cout << "New client " << message_Client.nick <<  " logged succesfully\n";
                     }
                     break;
@@ -100,9 +97,9 @@ void ChatServer::do_messages()
                     if(is_old_user)
                     {
                         delete *client_position;
-                        //delete *client_Player_Position;
+                        delete *client_Player_Position;
                         clients.erase(client_position);
-                        //clients_player.erase(client_Player_Position);
+                        clients_player.erase(client_Player_Position);
                         std::cout << "Client " << message_Client.nick <<  " logged out succesfully\n";
                     }
                     else
@@ -138,7 +135,6 @@ void ChatServer::do_messages()
                     break;
             }
         }
-        /*
         if(clients_player.size() > 0)
         {
             for(auto it = clients_player.begin(); it != clients_player.end(); ++it)
@@ -147,33 +143,34 @@ void ChatServer::do_messages()
                 switch (p->Color())
                 {
                     case 0:
-                        dpy.set_color(XLDisplay::RED);
+                        dpy->set_color(XLDisplay::RED);
                         break;
                     case 1:
-                        dpy.set_color(XLDisplay::BROWN);
+                        dpy->set_color(XLDisplay::BROWN);
                         break;
                     case 2:
-                        dpy.set_color(XLDisplay::BLUE);
+                        dpy->set_color(XLDisplay::BLUE);
                         break;
                     case 3:
-                        dpy.set_color(XLDisplay::GREEN);
+                        dpy->set_color(XLDisplay::GREEN);
                         break;
                     case 4:
-                        dpy.set_color(XLDisplay::WHITE);
+                        dpy->set_color(XLDisplay::WHITE);
                         break;
                     case 5:
-                        dpy.set_color(XLDisplay::BLACK);
+                        dpy->set_color(XLDisplay::BLACK);
                         break;
                     case 6:
-                        dpy.set_color(XLDisplay::RED);
+                        dpy->set_color(XLDisplay::RED);
                         break;                   
                     default:
                         break;
                 }
-                dpy.circle(p->Position().x, p->Position().y, p->Size_());
+                dpy->circle(p->Position().x, p->Position().y, p->Size_());
             }
-        }*/
-        //dpy.flush();
+        }
+        dpy->flush();
+        dpy->clear();
     }
 }
 

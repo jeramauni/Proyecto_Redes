@@ -4,36 +4,26 @@
 
 class Vector2
 {
-    public:
+public:
     uint16_t x = 0;
     uint16_t y = 0;
 
-    Vector2()   { x = 0; y = 0; }
+    Vector2();
 
-    Vector2(uint16_t _x, uint16_t _y)
-    {
-        x = _x;
-        y = _y;
-    };
-    
-    ~Vector2() {};
+    Vector2(uint16_t _x, uint16_t _y);
 
-    Vector2& operator = (const Vector2 &vec_new)
+    ~Vector2();
+
+    inline Vector2& operator = (const Vector2& vec_)
     {
-        x = vec_new.x;
-        y = vec_new.y;
+        x = vec_.x;
+        y = vec_.y;
 
         return *this;
-    }
-/*    
-    bool operator == (const Vector2& vec_1, const Vector2& vec_2) const
-    {
-        return (vec_1.x == vec_2.x && vec_1.y == vec_2.y);
-    }
+    };
 
-    ostream& operator << (ostream& os, const Vector2& v)
+    inline bool operator== (const Vector2& vec_)
     {
-        //os << "{ " << v.x << ", " << v.y << "}";
-        return os;
-    }*/
+        return (vec_.x == this->x && vec_.y == this->y);
+    };
 };

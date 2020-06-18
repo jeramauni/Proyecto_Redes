@@ -7,7 +7,7 @@ LIBS=-lpthread -lm -lX11 -std=c++11
 %.o: %.cc $(DEPS)
 	$(CC) -g -c -o $@ $< $(CFLAGS)
 
-all: server client 
+all: clean server client 
 
 server: $(OBJ) CanarIOServerApp.o
 	g++ -o $@ $^ $(CFLAGS) $(LIBS)

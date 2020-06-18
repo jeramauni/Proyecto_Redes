@@ -1,46 +1,34 @@
 #include "Player.h"
 
-Player::Player(Vector2 position_, uint16_t initial_size_, uint8_t color_)
+Player::Player(Vector2 _position, uint16_t initial_size_, XLDisplay::XLColor _color)
 {
-    position = position_;
-    size = initial_size_;
-    color = color_;
+    position_ = _position;
+    size_ = initial_size_;
+    color_ = _color;
 }
 
 Player::~Player()
 {
 
 }
-/*
-bool Player::SameDir(Player* p_)
-{ 
-    return (p_->Dir() == dir);
+
+void Player::Update(XLDisplay* dpy)
+{
+    dpy->set_color(color_);
+    dpy->circle(position_.x, position_.y, size_);
 }
 
-Socket* Player::Dir()
+Vector2 Player::position()
 {
-    std::cout << "4.25 \n";
-    return dir;
-}
-*/
-Vector2 Player::Position()
-{
-    return position;
+    return position_;
 }
 
-uint8_t Player::Color()
+XLDisplay::XLColor Player::color()
 {
-    return color;
+    return color_;
 }
 
-uint16_t Player::Size_()
+uint16_t Player::size()
 {
-    return size;
-}
-
-void Player::DebugInfo()
-{
-    std::cout << "Position: (" << position.x << ", " << position.y << ")\n";
-    std::cout << "Size: " << size << '\n';
-    std::cout << "Color: " << color << '\n';
+    return size_;
 }

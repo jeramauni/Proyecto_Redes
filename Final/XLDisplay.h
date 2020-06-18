@@ -87,10 +87,11 @@ public:
         XDrawLines(xl_dpy, xl_wdw, xl_gc, points, npoints, CoordModeOrigin);
     }
 
-    // Dibuja un círculo con centro en (x,y) y radio r
+    // Dibuja un círculo con centro en (x,y) y radio r y lo rellena
     void circle(int32_t x, int32_t y, int32_t r)
     {
-        XDrawArc(xl_dpy, xl_wdw, xl_gc, x-r, y - r, 2 * r, 2 * r, 0, 360*64);
+        XDrawArc(xl_dpy, xl_wdw, xl_gc, x - r, y - r, 2 * r, 2 * r, 0, 360*64);
+        XFillArc(xl_dpy, xl_wdw, xl_gc, x - r, y - r, 2 * r, 2 * r, 0, 360*64);
     }
 
     // Dibuja un rectángulo con vértice superior-izquierdo en (x,y), ancho w

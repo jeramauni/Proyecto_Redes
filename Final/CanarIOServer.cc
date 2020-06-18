@@ -55,7 +55,7 @@ void CanarIOServer::do_messages()
                     }
                     else {
                         Vector2 pos = Vector2((uint16_t)0, (uint16_t)200 * clients_player.size());
-                        Player* new_Player = new Player(pos, (uint16_t)30, (uint8_t)2);
+                        Player* new_Player = new Player(pos, (uint16_t)30, XLDisplay::XLColor::RED);
                         clients.push_back(client_Socket);
                         clients_player.push_back(new_Player);
                         std::cout << "New client " << message_Client.nick <<  " logged succesfully\n";
@@ -83,7 +83,6 @@ void CanarIOServer::do_messages()
                 {
                     if(is_old_user)
                     {
-                        std::cout << "Is not an old user \n";
                         for(auto it = clients.begin(); it != clients.end(); it++)
                         {
                             if(!(*(*it) == *client_Socket)) 
@@ -91,7 +90,6 @@ void CanarIOServer::do_messages()
                                 socket.send(message_Client, *(*it));
                             }
                         }
-                        std::cout << "Client " << message_Client.nick <<  " says "<< message_Client.message <<" \n";
                     }
                     else
                     {
@@ -105,38 +103,13 @@ void CanarIOServer::do_messages()
                     break;
             }
         }
-        if(clients_player.size() > 0)
+        //Update 
+       if(clients_player.size() > 0)
         {
-            for(auto it = clients_player.begin(); it != clients_player.end(); ++it)
+            for(auto it = clients_player.begin(); it != clients_player.end(); it++)
             {
                 Player* p = (*it);
-                switch (p->Color())
-                {
-                    case 0:
-                        dpy->set_color(XLDisplay::RED);
-                        break;
-                    case 1:
-                        dpy->set_color(XLDisplay::BROWN);
-                        break;
-                    case 2:
-                        dpy->set_color(XLDisplay::BLUE);
-                        break;
-                    case 3:
-                        dpy->set_color(XLDisplay::GREEN);
-                        break;
-                    case 4:
-                        dpy->set_color(XLDisplay::WHITE);
-                        break;
-                    case 5:
-                        dpy->set_color(XLDisplay::BLACK);
-                        break;
-                    case 6:
-                        dpy->set_color(XLDisplay::RED);
-                        break;                   
-                    default:
-                        break;
-                }
-                dpy->circle(p->Position().x, p->Position().y, p->Size_());
+                p->Update(dpy);
             }
         }
         dpy->flush();

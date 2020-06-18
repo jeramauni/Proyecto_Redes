@@ -10,17 +10,18 @@ class Player
 {
 public:
 
-    Player(Vector2 position_, uint16_t initial_size_, uint8_t color_);
+    Player(Vector2 _position, uint16_t initial_size_, XLDisplay::XLColor _color);
     ~Player();
-
-    void DebugInfo(); 
-    Vector2 Position();
-    uint8_t Color();
-    uint16_t Size_();
+    
+    void Update(XLDisplay* dpy);
+    
+    Vector2 position();
+    XLDisplay::XLColor color();
+    uint16_t size();
 
 private:
 
-    uint8_t color;
-    uint16_t size;
-    Vector2 position;
+    XLDisplay::XLColor color_;
+    uint16_t size_;
+    Vector2 position_;
 };

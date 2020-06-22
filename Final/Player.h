@@ -14,6 +14,7 @@ public:
     ~Player();
     
     void Update(XLDisplay* dpy);
+    void Move(Vector2 new_Position);
     
     Vector2 position();
     XLDisplay::XLColor color();

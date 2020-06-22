@@ -28,18 +28,24 @@ void CanarIOClient::logout()
 void CanarIOClient::input_thread()
 {
     bool inChat = true;
+    XLDisplay::init(80, 80, "CanarIO-client");
+    XLDisplay *dpy;
     while (inChat)
     {
         // Leer stdin con std::getline
         // Enviar al servidor usando socket
         std::string msg;
-        std::getline(std::cin, msg);
 
-        if(msg == "exit" || msg == "logout")
+        char key = dpy->wait_key();
+
+        msg = key;
+
+        std::cout << msg <<"\n";
+
+        if(msg == "exit" || msg == "logout" || msg == "q")
         {
             inChat = false;
-            logout();
-        } 
+        }
         else
         {
             Message em(nick, msg);
@@ -47,7 +53,10 @@ void CanarIOClient::input_thread()
 
             socket.send(em, socket);
         }
+        dpy->flush();
+        dpy->clear();
     }
+    logout();
 }
 
 void CanarIOClient::net_thread()

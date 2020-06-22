@@ -1,5 +1,7 @@
 #include <string.h>
 #include "Socket.h"
+#include "XLDisplay.h"
+#include "Vector2.h"
 
 class CanarIOClient
 {

@@ -30,7 +30,7 @@ Socket::Socket(const char * address, const char * port):sd(-1)
     freeaddrinfo(res);
 }
 
-int Socket::recv(Serializable &obj, Socket * &sock)
+int Socket::recv(Serializable &obj, Socket **sock)
 {
     struct sockaddr sa;
     socklen_t sa_len = sizeof(struct sockaddr);

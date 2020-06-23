@@ -35,5 +35,5 @@ uint16_t Player::size()
 
 void Player::Move(Vector2 new_Position)
 {
-    position == new_Position;
+    position_ = new_Position;
 }

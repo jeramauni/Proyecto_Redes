@@ -83,13 +83,43 @@ void CanarIOServer::do_messages()
                 {
                     if(is_old_user)
                     {
+                        char key = message_Client.message[0];
+                        Vector2 player_position = (*client_Player_Position)->position();
+                        switch (key)
+                        {
+                            case 'w':
+                            case 'W':
+                                player_position.y--;
+                                (*client_Player_Position)->Move(player_position);
+                                break;
+                            case 's':
+                            case 'S':
+                                player_position.y++;
+                                (*client_Player_Position)->Move(player_position);
+                                break;
+                            case 'a':
+                            case 'A':
+                                player_position.x--;
+                                (*client_Player_Position)->Move(player_position);
+                                break;
+                            case 'd':
+                            case 'D':
+                                player_position.x++;
+                                (*client_Player_Position)->Move(player_position);                                                                
+                                break;
+                        
+                            default:
+                                break;
+                        }
+                        /*
+                        //Futuro renderizado cliente
                         for(auto it = clients.begin(); it != clients.end(); it++)
                         {
-                            if(!(*(*it) == *client_Socket)) 
-                            {
-                                socket.send(message_Client, *(*it));
-                            }
-                        }
+                            //Comprobarción para ver si se pasan bien los mensajes
+                            socket.send(message_Client, *(*it));
+                           
+                        } 
+                        */
                     }
                     else
                     {

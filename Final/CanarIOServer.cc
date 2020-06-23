@@ -19,12 +19,12 @@ void CanarIOServer::do_messages()
     while (true)
     {
         
-        Socket* client_Socket;
+        Socket* client_Socket = nullptr;
         Message message_Client;
 
         std::cout << "Cantidad de usuarios: " << clients_player.size() << "\n";
 
-        int err = socket.recv(message_Client, client_Socket);
+        int err = socket.recv(message_Client, &client_Socket);
 
         bool is_old_user = false;
         auto client_position = clients.begin();

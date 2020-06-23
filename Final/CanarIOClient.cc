@@ -65,9 +65,9 @@ void CanarIOClient::net_thread()
     {
         //Recibir Mensajes de red
         //Mostrar en pantalla el mensaje de la forma "nick: mensaje"
-        Socket* server_Socket;
+        Socket* server_Socket = nullptr;
         Message message_Server;
-        int tmp = socket.recv(message_Server, server_Socket);
+        int tmp = socket.recv(message_Server, &server_Socket);
         if(tmp != -1)
         {
             std::cout << message_Server.nick << ": " << message_Server.message << "\n";

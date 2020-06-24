@@ -2,3 +2,9 @@
 .vs/
 
 Final/.vscode/
+
+*.o
+
+Final/server
+
+Final/client

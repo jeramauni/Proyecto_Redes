@@ -27,10 +27,9 @@ void CanarIOClient::logout()
 
 void CanarIOClient::input_thread()
 {
-    bool inChat = true;
     XLDisplay::init(80, 80, "CanarIO-client");
     XLDisplay *dpy;
-    while (inChat)
+    while (live)
     {
         // Leer stdin con std::getline
         // Enviar al servidor usando socket
@@ -44,7 +43,7 @@ void CanarIOClient::input_thread()
 
         if(msg == "exit" || msg == "logout" || msg == "q")
         {
-            inChat = false;
+            live = false;
         }
         else
         {
@@ -68,9 +67,17 @@ void CanarIOClient::net_thread()
         Socket* server_Socket = nullptr;
         Message message_Server;
         int tmp = socket.recv(message_Server, &server_Socket);
-        if(tmp != -1)
+        if(message_Server.type == Message::GAMEOVER)
         {
-            std::cout << message_Server.nick << ": " << message_Server.message << "\n";
+            live = false;
+            std::cout << "--GAME OVER-- \n" << message_Server.nick << " kill you \n";
+        }
+        else
+        {
+            if(tmp != -1)
+            {
+                std::cout << message_Server.nick << ": " << message_Server.message << "\n";
+            }
         }
     }
 }

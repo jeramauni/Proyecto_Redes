@@ -10,19 +10,30 @@ class Player
 {
 public:
 
-    Player(Vector2 _position, uint16_t initial_size_, XLDisplay::XLColor _color);
+    Player(Vector2 _position, uint16_t initial_size_, XLDisplay::XLColor _color,
+                 Socket* initial_socket_, std::string initial_nickName_);
     ~Player();
     
     void Update(XLDisplay* dpy);
     void Move(Vector2 new_Position);
-    
+    void ChangeVelocity(int new_velocity);
+    void ChangeSize(uint16_t new_Size);
+
+
+    std::string nickname();
+    bool IsColliding(Player* other_);
+    int velocity();
+    Socket* socket();
     Vector2 position();
     XLDisplay::XLColor color();
     uint16_t size();
 
 private:
 
+    std::string nickname_ = "null";
+    int velocity_ = 5;
     XLDisplay::XLColor color_;
+    Socket* socket_;
     uint16_t size_;
     Vector2 position_;
 };

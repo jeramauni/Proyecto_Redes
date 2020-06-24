@@ -27,20 +27,16 @@ void CanarIOServer::do_messages()
         int err = socket.recv(message_Client, &client_Socket);
 
         bool is_old_user = false;
-        auto client_position = clients.begin();
-        auto it = clients.begin();
         auto client_Player_Position = clients_player.begin();
         auto it_p = clients_player.begin();
-        while( it != clients.end() && !is_old_user)
+        while( it_p != clients_player.end() && !is_old_user)
         {
-            if(*(*it) == *client_Socket)
+            if(*((*it_p)->socket()) == *client_Socket)
             {
                 is_old_user = true;
-                client_position = it;
                 client_Player_Position = it_p;
             }
             it_p++;
-            it++;
         }
 
         if(err != -1)
@@ -55,8 +51,9 @@ void CanarIOServer::do_messages()
                     }
                     else {
                         Vector2 pos = Vector2((uint16_t)0, (uint16_t)200 * clients_player.size());
-                        Player* new_Player = new Player(pos, (uint16_t)30, XLDisplay::XLColor::RED);
-                        clients.push_back(client_Socket);
+                        int random = std::rand() % 7;
+                        int random_Size = std::rand() % 70 + 20;
+                        Player* new_Player = new Player(pos, (uint16_t)random_Size, (XLDisplay::XLColor)random, client_Socket, message_Client.nick);
                         clients_player.push_back(new_Player);
                         std::cout << "New client " << message_Client.nick <<  " logged succesfully\n";
                     }
@@ -66,9 +63,7 @@ void CanarIOServer::do_messages()
                 {
                     if(is_old_user)
                     {
-                        delete *client_position;
                         delete *client_Player_Position;
-                        clients.erase(client_position);
                         clients_player.erase(client_Player_Position);
                         std::cout << "Client " << message_Client.nick <<  " logged out succesfully\n";
                     }
@@ -84,30 +79,30 @@ void CanarIOServer::do_messages()
                     if(is_old_user)
                     {
                         char key = message_Client.message[0];
+                        int player_velocity = (*client_Player_Position)->velocity();
                         Vector2 player_position = (*client_Player_Position)->position();
                         switch (key)
                         {
                             case 'w':
                             case 'W':
-                                player_position.y--;
-                                (*client_Player_Position)->Move(player_position);
+                                player_position.y -= player_velocity;
+                                (*client_Player_Position)->Move(player_position);                                                                
                                 break;
                             case 's':
                             case 'S':
-                                player_position.y++;
-                                (*client_Player_Position)->Move(player_position);
+                                player_position.y += player_velocity;
+                                (*client_Player_Position)->Move(player_position);                                                                
                                 break;
                             case 'a':
                             case 'A':
-                                player_position.x--;
-                                (*client_Player_Position)->Move(player_position);
+                                player_position.x -= player_velocity;
+                                (*client_Player_Position)->Move(player_position);                                                                
                                 break;
                             case 'd':
                             case 'D':
-                                player_position.x++;
+                                player_position.x += player_velocity;
                                 (*client_Player_Position)->Move(player_position);                                                                
                                 break;
-                        
                             default:
                                 break;
                         }
@@ -136,10 +131,36 @@ void CanarIOServer::do_messages()
         //Update 
        if(clients_player.size() > 0)
         {
+            std::vector<std::vector<Player*>::iterator> dead_Players;
             for(auto it = clients_player.begin(); it != clients_player.end(); it++)
             {
                 Player* p = (*it);
+                //No tiene sentido calcular colliding si solo hay un jugador
+                if(clients_player.size() > 1)
+                {
+                    for(auto colliding = clients_player.begin(); colliding != clients_player.end(); colliding++)
+                    {
+                        if(!(*(p->socket()) == *((*colliding)->socket())))
+                        {
+                            if(p->IsColliding(*colliding))
+                            {
+                                dead_Players.push_back(it);
+                                (*colliding)->ChangeSize(p->size() + (*colliding)->size());
+                            }
+                        }
+                    }
+                }
                 p->Update(dpy);
+            }
+            
+            for(auto dead_player = dead_Players.begin(); dead_player != dead_Players.end(); dead_player++)
+            {
+                std::vector<Player*>::iterator actual_dead = (*dead_player);
+                Message gameOverMsg((*actual_dead)->nickname(), " ");
+                gameOverMsg.type = Message::GAMEOVER;
+                socket.send(gameOverMsg, *((*actual_dead)->socket()));
+                delete *actual_dead;
+                clients_player.erase(actual_dead);
             }
         }
         dpy->flush();

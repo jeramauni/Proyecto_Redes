@@ -42,7 +42,7 @@ private:
      * Socket para comunicar con el servidor
      */
     Socket socket;
-
+    bool live = true;
     /**
      * Nick del usuario
      */

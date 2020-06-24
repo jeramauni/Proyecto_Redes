@@ -2,6 +2,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <vector>
+#include <iterator>
 
 #include "Serializable.h"
 #include "Socket.h"

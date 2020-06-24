@@ -23,7 +23,7 @@ void renderPlayers();
      *  Lista de clientes conectados al servidor de Chat, representados por
      *  su socket
      */
-    std::vector<Socket *> clients;
+    std::vector<Player *> feeding;
     std::vector<Player *> clients_player;
     /**
      * Socket del servidor

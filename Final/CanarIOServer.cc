@@ -8,7 +8,7 @@ CanarIOServer::CanarIOServer(const char * s, const char * p): socket(s, p)
 
 CanarIOServer::~CanarIOServer()
 {
-    clients.clear();
+    feeding.clear();
     clients_player.clear();
 }
 
@@ -16,6 +16,17 @@ void CanarIOServer::do_messages()
 {
     XLDisplay::init(720, 480, "CanarIO-server");
     XLDisplay *dpy;
+    for(int i = 0; i < 20; i++)
+    {
+        //uint16_t food_size = std::rand() % 40 + 5;
+        Vector2 food_pos = Vector2(std::rand() % (720 - 3*2) + 3, 
+                                   std::rand() % (480 - 3*2) + 3);
+        Player* food = new Player(food_pos, 3);
+        feeding.push_back(food);
+        food->Update(dpy);
+    }
+    dpy->flush();
+    dpy->clear();
     while (true)
     {
         
@@ -50,9 +61,10 @@ void CanarIOServer::do_messages()
                         std::cout << "LOGIN FAIL: Client " << message_Client.nick <<  " is already logged\n";
                     }
                     else {
-                        Vector2 pos = Vector2((uint16_t)0, (uint16_t)200 * clients_player.size());
+                        Vector2 pos = Vector2((uint16_t)100, (uint16_t)200 * clients_player.size());
                         int random = std::rand() % 7;
-                        int random_Size = std::rand() % 70 + 20;
+                        if(random == 5) random++;
+                        int random_Size = 20;
                         Player* new_Player = new Player(pos, (uint16_t)random_Size, (XLDisplay::XLColor)random, client_Socket, message_Client.nick);
                         clients_player.push_back(new_Player);
                         std::cout << "New client " << message_Client.nick <<  " logged succesfully\n";
@@ -144,15 +156,30 @@ void CanarIOServer::do_messages()
                         {
                             if(p->IsColliding(*colliding))
                             {
+                                //Si entra significa que ha perdido
                                 dead_Players.push_back(it);
                                 (*colliding)->ChangeSize(p->size() + (*colliding)->size());
                             }
                         }
                     }
                 }
+                for(auto food = feeding.begin(); food != feeding.end(); food++)
+                {
+                    if((*food)->IsColliding(p))
+                    {
+                        p->ChangeSize(p->size() + (*food)->size());
+                        Vector2 food_pos = Vector2(std::rand() % (720 - 3*2) + 3, 
+                                                    std::rand() % (480 - 3*2) + 3);
+                        (*food)->Move(food_pos);
+                    }
+                }
+                for(auto food = feeding.begin(); food != feeding.end(); food++)
+                {
+                    (*food)->Update(dpy);
+                }
+
                 p->Update(dpy);
             }
-            
             for(auto dead_player = dead_Players.begin(); dead_player != dead_Players.end(); dead_player++)
             {
                 std::vector<Player*>::iterator actual_dead = (*dead_player);

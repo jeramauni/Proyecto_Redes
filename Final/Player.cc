@@ -11,6 +11,12 @@ Player::Player(Vector2 _position, uint16_t initial_size_, XLDisplay::XLColor _co
     nickname_ = initial_nickName_;
 }
 
+Player::Player(Vector2 _position, uint16_t initial_size_)
+{
+    position_ = _position;
+    size_ = initial_size_;
+}
+
 Player::~Player()
 {
 
@@ -18,13 +24,14 @@ Player::~Player()
 
 void Player::Update(XLDisplay* dpy)
 {
+    std::cout << "dasda \n";
     dpy->set_color(color_);
     dpy->circle(position_.x, position_.y, size_);
 }
 
 bool Player::IsColliding(Player* other_)
 {
-    int colision_zone = (size_ / 4) + (other_->size() / 4);
+    int colision_zone = (size_ / 2) + (other_->size() / 2);
     std::cout << colision_zone << "\n";
     if(std::abs(position_.x - other_->position().x) < colision_zone &&
        std::abs(position_.y - other_->position().y) < colision_zone)

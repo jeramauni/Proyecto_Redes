@@ -12,7 +12,61 @@ CanarIOServer::~CanarIOServer()
     clients_player.clear();
 }
 
-void CanarIOServer::do_messages()
+//Movimiento de jugador-------------------------------------------------------------------------------
+void CanarIOServer::move_msg(char key, Player* p)
+{
+    int player_velocity = (p)->velocity();
+    Vector2 player_position = (p)->position();
+    switch (key)
+    {
+    case 'w':
+    case 'W':
+        player_position.y -= player_velocity;
+        (p)->Move(player_position);
+        break;
+    case 's':
+    case 'S':
+        player_position.y += player_velocity;
+        (p)->Move(player_position);
+        break;
+    case 'a':
+    case 'A':
+        player_position.x -= player_velocity;
+        (p)->Move(player_position);
+        break;
+    case 'd':
+    case 'D':
+        player_position.x += player_velocity;
+        (p)->Move(player_position);
+        break;
+    default:
+        break;
+    }
+}
+
+//Actualiza la pantalla de los jugadores
+void CanarIOServer::renderPlayers()
+{
+    for (auto it = clients_player.begin(); it != clients_player.end(); it++)
+    {
+        for (auto it2 = clients_player.begin(); it2 != clients_player.end(); it2++)
+        {
+            Vector2 pos = (*it2)->position();
+            uint16_t size = (*it2)->size();
+            XLDisplay::XLColor color = (*it2)->color();
+            std::string s;
+            s = std::to_string(pos.x) + '-' + std::to_string(pos.y) + '-' + std::to_string(size) + '-' + std::to_string(color);
+            Message drawPlayer((*it)->nickname(), s);
+            drawPlayer.type = Message::DRAWPLAYER;
+            socket.send(drawPlayer, *((*it)->socket()));
+            std::cout << "soket.send " << drawPlayer.message << '\n';
+        }
+
+    }
+}
+
+//Principal-------------------------------------------------------------------------------
+void CanarIOServer::run()
 {
     XLDisplay::init(720, 480, "CanarIO-server");
     XLDisplay *dpy;
@@ -86,47 +140,12 @@ void CanarIOServer::do_messages()
                     break;
                 }   
 
-                case Message::MESSAGE:
+                case Message::MOVE:
                 {
                     if(is_old_user)
                     {
                         char key = message_Client.message[0];
-                        int player_velocity = (*client_Player_Position)->velocity();
-                        Vector2 player_position = (*client_Player_Position)->position();
-                        switch (key)
-                        {
-                            case 'w':
-                            case 'W':
-                                player_position.y -= player_velocity;
-                                (*client_Player_Position)->Move(player_position);                                                                
-                                break;
-                            case 's':
-                            case 'S':
-                                player_position.y += player_velocity;
-                                (*client_Player_Position)->Move(player_position);                                                                
-                                break;
-                            case 'a':
-                            case 'A':
-                                player_position.x -= player_velocity;
-                                (*client_Player_Position)->Move(player_position);                                                                
-                                break;
-                            case 'd':
-                            case 'D':
-                                player_position.x += player_velocity;
-                                (*client_Player_Position)->Move(player_position);                                                                
-                                break;
-                            default:
-                                break;
-                        }
-                        /*
-                        //Futuro renderizado cliente
-                        for(auto it = clients.begin(); it != clients.end(); it++)
-                        {
-                            //Comprobarción para ver si se pasan bien los mensajes
-                            socket.send(message_Client, *(*it));
-                           
-                        } 
-                        */
+                        move_msg(key, *client_Player_Position);
                     }
                     else
                     {
@@ -189,6 +208,7 @@ void CanarIOServer::do_messages()
                 delete *actual_dead;
                 clients_player.erase(actual_dead);
             }
+            renderPlayers();
         }
         dpy->flush();
         dpy->clear();

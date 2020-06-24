@@ -12,7 +12,7 @@ public:
      * @param n nick del usuario
      */
     CanarIOClient(const char * s, const char * p, const char * n):socket(s, p),
-        nick(n){};
+        nick(n), dpy(XLDisplay::display()){};
 
     /**
      *  Envía el mensaje de login al servidor
@@ -37,7 +37,11 @@ public:
     void net_thread();
 
 private:
+    //Parsea el mensaje de renderizado   
+    void parseDraw(Vector2& position_, uint16_t& size_, XLDisplay::XLColor& color_, std::string message);
 
+    XLDisplay &dpy;
+  
     /**
      * Socket para comunicar con el servidor
      */

@@ -9,7 +9,7 @@ int main(int argc, char **argv)
 
     CanarIOServer es(argv[1], argv[2]);
     
-    es.do_messages();
+    es.run();
 
     sigemptyset(&waitset);
     sigaddset(&waitset, SIGQUIT);

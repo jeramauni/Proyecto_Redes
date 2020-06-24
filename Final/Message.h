@@ -21,14 +21,15 @@
 class Message : public Serializable
 {
 public:
-    static const size_t MESSAGE_SIZE = sizeof(char) * 88 + sizeof(uint8_t);
+    static const size_t MESSAGE_SIZE = sizeof(char) * 208 + sizeof(uint8_t);
 
     enum MessageType
     {
         LOGIN   = 0,
-        MESSAGE = 1,
+        MOVE = 1,
         LOGOUT  = 2,
-        GAMEOVER = 3
+        GAMEOVER = 3,
+        DRAWPLAYER = 4
     };
 
     Message(){};

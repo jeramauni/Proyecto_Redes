@@ -27,15 +27,14 @@ void CanarIOClient::logout()
 
 void CanarIOClient::input_thread()
 {
-    XLDisplay::init(80, 80, "CanarIO-client");
-    XLDisplay *dpy;
+    XLDisplay::init(720, 480, "CanarIO-client");
+
     while (live)
     {
         // Leer stdin con std::getline
         // Enviar al servidor usando socket
         std::string msg;
-
-        char key = dpy->wait_key();
+        char key = dpy.wait_key();
 
         msg = key;
 
@@ -48,36 +47,101 @@ void CanarIOClient::input_thread()
         else
         {
             Message em(nick, msg);
-            em.type = Message::MESSAGE;
+            em.type = Message::MOVE;
 
             socket.send(em, socket);
         }
-        dpy->flush();
-        dpy->clear();
+        dpy.flush();
+        dpy.clear();
     }
     logout();
 }
 
+void CanarIOClient::parseDraw(Vector2& position_, uint16_t& size_, XLDisplay::XLColor& color_, std::string message)
+{
+    int value = -1;
+    int guion = 0;
+    for(size_t i = 0; i < message.length(); i++)
+    {
+        char c = message[i];
+
+        if (c == '-')
+        {
+            switch (guion)
+            {
+                case 0:
+                    position_.x = (uint16_t)value;
+                    break;
+                case 1:
+                    position_.y = (uint16_t)value;
+                    break;
+                case 2:
+                    size_ = (uint16_t)value;
+                    break;
+                default:
+                std::cerr << "Error on parsing drawing information\n";
+                    break;
+            }
+            value = -1;
+            guion++;
+        }
+        else
+        {
+            if (value == -1) 
+            {
+                value = c - '0';
+            }
+            else
+            {
+                value = value * 10 + c - '0';
+
+            }
+            
+        }
+    }
+    color_= (XLDisplay::XLColor)value;
+    std::cout << std::to_string(color_) << '\n';
+}
+
 void CanarIOClient::net_thread()
 {
+
     while(true)
     {
         //Recibir Mensajes de red
         //Mostrar en pantalla el mensaje de la forma "nick: mensaje"
         Socket* server_Socket = nullptr;
-        Message message_Server;
+        Message message_Server;      
         int tmp = socket.recv(message_Server, &server_Socket);
-        if(message_Server.type == Message::GAMEOVER)
+        switch (message_Server.type)
         {
-            live = false;
-            std::cout << "--GAME OVER-- \n" << message_Server.nick << " kill you \n";
-        }
-        else
-        {
-            if(tmp != -1)
+            case Message::GAMEOVER:
+                live = false;
+                std::cout << "--GAME OVER-- \n" << message_Server.nick << " killed you \n";
+        
+                break;
+            case Message::DRAWPLAYER:
             {
-                std::cout << message_Server.nick << ": " << message_Server.message << "\n";
+                std::cout << "message received: " << message_Server.message << '\n';
+                Vector2 position_;
+                uint16_t size_;
+                XLDisplay::XLColor color_;
+                parseDraw(position_, size_, color_, message_Server.message);  
+                std::cout << "Color: " << std::to_string(color_) << '\n';
+                //dpy.flush();
+                //dpy.clear();
+                dpy.set_color(XLDisplay::RED);
+                //dpy.circle(position_.x, position_.y, size_);
             }
+                break;
+
+            default:
+                if(tmp != -1)
+                {
+                    std::cout << message_Server.nick << ": " << message_Server.message << "\n";
+                }
+                break;
         }
+
     }
 }

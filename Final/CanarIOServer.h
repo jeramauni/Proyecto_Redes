@@ -13,13 +13,12 @@ class CanarIOServer
 public:
     CanarIOServer(const char * s, const char * p);
     ~CanarIOServer();
-    /**
-     *  Thread principal del servidor recive mensajes en el socket y
-     *  lo distribuye a los clientes. Mantiene actualizada la lista de clientes
-     */
-    void do_messages();
-
+    //Thread principal del servidor
+    void run();
+    //Procesamiento mensajes
+    void move_msg(char key, Player* p);
 private:
+void renderPlayers();
     /**
      *  Lista de clientes conectados al servidor de Chat, representados por
      *  su socket

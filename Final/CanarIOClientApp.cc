@@ -12,6 +12,7 @@ extern "C" void * _client_thread(void *arg)
 
 int main(int argc, char **argv)
 {
+    XLDisplay::init(720, 480, "CanarIO-client");
     CanarIOClient ec(argv[1], argv[2], argv[3]);
 
     pthread_attr_t attr;

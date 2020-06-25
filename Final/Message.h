@@ -29,7 +29,8 @@ public:
         MOVE = 1,
         LOGOUT  = 2,
         GAMEOVER = 3,
-        DRAWPLAYER = 4
+        DRAWPLAYER = 4,
+        RENDERCALL = 5,
     };
 
     Message(){};

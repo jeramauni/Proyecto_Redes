@@ -59,9 +59,10 @@ void CanarIOServer::renderPlayers()
             Message drawPlayer((*it)->nickname(), s);
             drawPlayer.type = Message::DRAWPLAYER;
             socket.send(drawPlayer, *((*it)->socket()));
-            std::cout << "soket.send " << drawPlayer.message << '\n';
         }
-
+        Message renderPlayers((*it)->nickname(), " ");
+        renderPlayers.type = Message::RENDERCALL;
+        socket.send(renderPlayers, *((*it)->socket()));
     }
 }
 

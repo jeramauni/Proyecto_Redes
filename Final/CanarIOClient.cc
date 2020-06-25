@@ -27,7 +27,6 @@ void CanarIOClient::logout()
 
 void CanarIOClient::input_thread()
 {
-    XLDisplay::init(720, 480, "CanarIO-client");
 
     while (live)
     {
@@ -122,24 +121,21 @@ void CanarIOClient::net_thread()
                 break;
             case Message::DRAWPLAYER:
             {
-                std::cout << "message received: " << message_Server.message << '\n';
                 Vector2 position_;
                 uint16_t size_;
                 XLDisplay::XLColor color_;
                 parseDraw(position_, size_, color_, message_Server.message);  
-                std::cout << "Color: " << std::to_string(color_) << '\n';
-                //dpy.flush();
-                //dpy.clear();
-                dpy.set_color(XLDisplay::RED);
-                //dpy.circle(position_.x, position_.y, size_);
+                
+                dpy.set_color(color_);
+                dpy.circle(position_.x, position_.y, size_);
             }
                 break;
-
+            case Message::RENDERCALL:
+            {    
+                dpy.flush();
+                dpy.clear();
+            }
             default:
-                if(tmp != -1)
-                {
-                    std::cout << message_Server.nick << ": " << message_Server.message << "\n";
-                }
                 break;
         }
 

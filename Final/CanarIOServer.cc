@@ -13,35 +13,30 @@ CanarIOServer::~CanarIOServer()
 }
 
 //Movimiento de jugador-------------------------------------------------------------------------------
-void CanarIOServer::move_msg(char key, Player* p)
+void CanarIOServer::move_msg(bool (&keys) [4], Player* p)
 {
     int player_velocity = (p)->velocity();
     Vector2 player_position = (p)->position();
-    switch (key)
+    std::string s = std::to_string(keys[0]) + std::to_string(keys[1]) +std::to_string(keys[2]) +std::to_string(keys[3]);;
+    std::cout << "Keys: " << s << '\n';
+    if (!keys[0]) 
     {
-    case 'w':
-    case 'W':
         player_position.y -= player_velocity;
-        (p)->Move(player_position);
-        break;
-    case 's':
-    case 'S':
-        player_position.y += player_velocity;
-        (p)->Move(player_position);
-        break;
-    case 'a':
-    case 'A':
-        player_position.x -= player_velocity;
-        (p)->Move(player_position);
-        break;
-    case 'd':
-    case 'D':
-        player_position.x += player_velocity;
-        (p)->Move(player_position);
-        break;
-    default:
-        break;
     }
+    if (!keys[1]) 
+    {
+        player_position.x -= player_velocity;
+    }
+    if (!keys[2]) 
+    {
+        player_position.y += player_velocity;
+    }
+    if (!keys[3]) 
+    {
+        player_position.x += player_velocity;
+    }     
+        (p)->Move(player_position);
+    renderPlayers();
 }
 
 //Actualiza la pantalla de los jugadores
@@ -49,6 +44,17 @@ void CanarIOServer::renderPlayers()
 {
     for (auto it = clients_player.begin(); it != clients_player.end(); it++)
     {
+        for (auto it3 = feeding.begin(); it3 != feeding.end(); it3++)
+        {
+            Vector2 pos = (*it3)->position();
+            uint16_t size = (*it3)->size();
+            XLDisplay::XLColor color = (*it3)->color();
+            std::string s;
+            s = std::to_string(pos.x) + '-' + std::to_string(pos.y) + '-' + std::to_string(size) + '-' + std::to_string(color);
+            Message drawPlayer((*it)->nickname(), s);
+            drawPlayer.type = Message::DRAWPLAYER;
+            int t = socket.send(drawPlayer, *((*it)->socket()));
+        }
         for (auto it2 = clients_player.begin(); it2 != clients_player.end(); it2++)
         {
             Vector2 pos = (*it2)->position();
@@ -59,7 +65,7 @@ void CanarIOServer::renderPlayers()
             Message drawPlayer((*it)->nickname(), s);
             drawPlayer.type = Message::DRAWPLAYER;
             socket.send(drawPlayer, *((*it)->socket()));
-        }
+        }    
         Message renderPlayers((*it)->nickname(), " ");
         renderPlayers.type = Message::RENDERCALL;
         socket.send(renderPlayers, *((*it)->socket()));
@@ -145,8 +151,13 @@ void CanarIOServer::run()
                 {
                     if(is_old_user)
                     {
-                        char key = message_Client.message[0];
-                        move_msg(key, *client_Player_Position);
+                        bool keys [4] = {0, 0, 0, 0};
+                        for(size_t i = 0; i < 4; i++)
+                        {
+                            keys[i] =  message_Client.message[i] - '0';
+                        }
+                      
+                        move_msg(keys, *client_Player_Position);
                     }
                     else
                     {

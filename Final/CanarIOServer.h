@@ -16,7 +16,7 @@ public:
     //Thread principal del servidor
     void run();
     //Procesamiento mensajes
-    void move_msg(char key, Player* p);
+    void move_msg(bool (&keys) [4], Player* p);
 private:
 void renderPlayers();
     /**

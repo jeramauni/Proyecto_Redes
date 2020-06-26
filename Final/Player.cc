@@ -24,7 +24,7 @@ Player::~Player()
 
 void Player::Update(XLDisplay* dpy)
 {
-    velocity_ =  (size_ - 79) / -7.8;
+    velocity_ =  (size_ - 100) / -10;
     if (velocity_ == 0) velocity_ = 1;
     dpy->set_color(color_);
     dpy->circle(position_.x, position_.y, size_);

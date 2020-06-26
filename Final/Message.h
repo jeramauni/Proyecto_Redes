@@ -28,9 +28,10 @@ public:
         LOGIN   = 0,
         MOVE = 1,
         LOGOUT  = 2,
-        GAMEOVER = 3,
-        DRAWPLAYER = 4,
-        RENDERCALL = 5,
+        DRAWPLAYER = 3,
+        RENDERCALL = 4,
+        WIN = 5,
+        LOSE = 6
     };
 
     Message(){};

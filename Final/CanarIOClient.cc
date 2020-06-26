@@ -1,189 +1,242 @@
-#include"CanarIOClient.h"
+#include "CanarIOServer.h"
 #include "Message.h"
 
 const Vector2 WINDOW_SIZE = Vector2(720, 480);
 
-void CanarIOClient::login()
+CanarIOServer::CanarIOServer(const char * s, const char * p): socket(s, p)
 {
-    std::string msg;
-
-    Message em(nick, msg);
-    em.type = Message::LOGIN;
-
-    int err = socket.send(em, socket);
-    if (err == -1) {
-        std::cout << "login send error \n";
-    }
-    std::cout << "send succeed: " << err << '\n';
-
+    socket.bind();
 }
 
-void CanarIOClient::logout()
+CanarIOServer::~CanarIOServer()
 {
-    std::string msg;
-
-    Message em(nick, msg);
-    em.type = Message::LOGOUT;
-
-    socket.send(em, socket);
+    feeding.clear();
+    clients_player.clear();
 }
 
-void CanarIOClient::input_thread()
+//Movimiento de jugador-------------------------------------------------------------------------------
+void CanarIOServer::move_msg(char key, Player* p)
 {
-
-    while (live)
+    int player_velocity = (p)->velocity();
+    Vector2 player_position = (p)->position();
+    switch (key)
     {
-        // Leer stdin con std::getline
-        // Enviar al servidor usando socket
-        std::string msg;
-        char key = dpy.wait_key();
-
-        msg = key;
-
-        if(msg == "q")
-        {
-            live = false;
-        }
-        else
-        {
-            Message em(nick, msg);
-            em.type = Message::MOVE;
-
-            socket.send(em, socket);
-        }     
+     case 'w':
+    case 'W':
+        if(player_position.y - p->size() >= 0) player_position.y -= player_velocity;
+        (p)->Move(player_position);
+        break;
+    case 's':
+    case 'S':
+        if(player_position.y + p->size() <= WINDOW_SIZE.y) player_position.y += player_velocity;
+        (p)->Move(player_position);
+        break;
+     case 'a':
+    case 'A':
+        if(player_position.x - p->size() >= 0) player_position.x -= player_velocity;
+        (p)->Move(player_position);
+        break;
+    case 'd':
+    case 'D':
+        if(player_position.x + p->size() <= WINDOW_SIZE.x) player_position.x += player_velocity;
+        (p)->Move(player_position);
+        break;
+    default:
+        break;
     }
-    logout();
 }
 
-void CanarIOClient::parseDraw(Vector2& position_, uint16_t& size_, XLDisplay::XLColor& color_, std::string message)
+//Actualiza la pantalla de los jugadores
+void CanarIOServer::renderPlayers()
 {
-    int value = -1;
-    int guion = 0;
-    for(size_t i = 0; i < message.length(); i++)
+    for (auto it = clients_player.begin(); it != clients_player.end(); it++)
     {
-        char c = message[i];
-
-        if (c == '-')
+        for (auto it3 = feeding.begin(); it3 != feeding.end(); it3++)
         {
-            switch (guion)
-            {
-                case 0:
-                    position_.x = (uint16_t)value;
-                    break;
-                case 1:
-                    position_.y = (uint16_t)value;
-                    break;
-                case 2:
-                    size_ = (uint16_t)value;
-                    break;
-                default:
-                std::cerr << "Error on parsing drawing information\n";
-                    break;
-            }
-            value = -1;
-            guion++;
+            Vector2 pos = (*it3)->position();
+            uint16_t size = (*it3)->size();
+            XLDisplay::XLColor color = (*it3)->color();
+            std::string s;
+            s = std::to_string(pos.x) + '-' + std::to_string(pos.y) + '-' + std::to_string(size) + '-' + std::to_string(color);
+            Message drawPlayer((*it3)->nickname(), s);
+            drawPlayer.type = Message::DRAWPLAYER;
+            int t = socket.send(drawPlayer, *((*it)->socket()));
         }
-        else
+        for (auto it2 = clients_player.begin(); it2 != clients_player.end(); it2++)
         {
-            if (value == -1) 
-            {
-                value = c - '0';
-            }
-            else
-            {
-                value = value * 10 + c - '0';
-
-            }
-            
+            Vector2 pos = (*it2)->position();
+            uint16_t size = (*it2)->size();
+            XLDisplay::XLColor color = (*it2)->color();
+            std::string s;
+            s = std::to_string(pos.x) + '-' + std::to_string(pos.y) + '-' + std::to_string(size) + '-' + std::to_string(color);
+            Message drawPlayer((*it2)->nickname(), s);
+            drawPlayer.type = Message::DRAWPLAYER;
+            socket.send(drawPlayer, *((*it)->socket()));
         }
+        Message renderPlayers((*it)->nickname(), " ");
+        renderPlayers.type = Message::RENDERCALL;
+        socket.send(renderPlayers, *((*it)->socket()));
     }
-    color_= (XLDisplay::XLColor)value;
 }
 
-void CanarIOClient::net_thread()
+void CanarIOServer::endGame(Player* winner)
 {
-    bool endGame = false;
-    Socket* server_Socket = nullptr;
-    Message message_Server;   
-    while(true)
+    for(auto it = clients_player.begin(); it != clients_player.end(); it++)
     {
-        //Recibir Mensajes de red
-        //Mostrar en pantalla el mensaje de la forma "nick: mensaje"   
-        if(!endGame) int tmp = socket.recv(message_Server, &server_Socket);
-        switch (message_Server.type)
+        Message gameOverMsg(" ", " ");
+        if(*((*it)->socket()) == *(winner->socket())) gameOverMsg.type = Message::WIN;
+        else gameOverMsg.type = Message::LOSE;
+        socket.send(gameOverMsg, *((*it)->socket()));   
+    }
+}
+
+//Principal-------------------------------------------------------------------------------
+void CanarIOServer::run()
+{
+    XLDisplay::init(WINDOW_SIZE.x, WINDOW_SIZE.y, "CanarIO-server");
+    XLDisplay *dpy;
+    for(int i = 0; i < 20; i++)
+    {
+        int food_size = 3;
+        Vector2 food_pos = Vector2(std::rand() % (WINDOW_SIZE.x - food_size*2) + food_size, 
+                                   std::rand() % (WINDOW_SIZE.y - food_size*2) + food_size);
+        Player* food = new Player(food_pos, food_size);
+        feeding.push_back(food);
+        food->Update(dpy);
+    }
+    dpy->flush();
+    dpy->clear();
+    while (true)
+    {
+        
+        Socket* client_Socket = nullptr;
+        Message message_Client;
+
+        int err = socket.recv(message_Client, &client_Socket);
+
+        bool is_old_user = false;
+        auto client_Player_Position = clients_player.begin();
+        auto it_p = clients_player.begin();
+        while( it_p != clients_player.end() && !is_old_user)
         {
-            case Message::DRAWPLAYER:
+            if(*((*it_p)->socket()) == *client_Socket)
             {
-                Vector2 position_;
-                uint16_t size_;
-                XLDisplay::XLColor color_;
-                parseDraw(position_, size_, color_, message_Server.message);  
-                
-                dpy.set_color(color_);
-                dpy.circle(position_.x, position_.y, size_);
-                if(color_ != XLDisplay::XLColor::GREEN)
+                is_old_user = true;
+                client_Player_Position = it_p;
+            }
+            it_p++;
+        }
+
+        if(err != -1)
+        {
+            switch (message_Client.type)
+            {
+                case Message::LOGIN:
                 {
-                    dpy.set_color(XLDisplay::BLACK);
-                    dpy.text(position_.x - (message_Server.nick.size() * 5), position_.y + ((size_/2)-15), message_Server.nick);
-                    dpy.text(position_.x - 10, position_.y + (size_/2), std::to_string(size_));
-                }
-                
-            }
-            break;
-            case Message::RENDERCALL:
-            {
-                dpy.flush();
-                dpy.clear();
-            }
-            break;
-            case Message::WIN:
-            {   
-                dpy.set_color(XLDisplay::GREEN);
-                dpy.circle(WINDOW_SIZE.x / 2, WINDOW_SIZE.y / 2, 300);
+                    if(is_old_user)
+                    {
+                        std::cout << "LOGIN FAIL: Client " << message_Client.nick <<  " is already logged\n";
+                    }
+                    else {
+                        Vector2 pos = Vector2((uint16_t)100, (uint16_t)200 * clients_player.size());
+                        int random = std::rand() % 3;
+                        int random_Size = 20;
+                        Player* new_Player = new Player(pos, (uint16_t)random_Size, (XLDisplay::XLColor)random, client_Socket, message_Client.nick);
+                        clients_player.push_back(new_Player);
+                        std::cout << "New client " << message_Client.nick <<  " logged succesfully\n";
+                        std::cout << "Cantidad de usuarios: " << clients_player.size() << "\n";
 
-                dpy.set_color(XLDisplay::BLACK);
-                // W
-                XPoint ptsW[] = {{110,95},{160,385},{210,285},{260,385},{310, 95}};
-                dpy.lines(ptsW, 5);
-                // I
-                dpy.line(330, 95, 430, 95);
-                dpy.line(370, 95, 370, 385);
-                dpy.line(330, 385, 430, 385);
-                // N
-                XPoint ptsI[] = {{450,385},{450,95},{550,385},{550,95}};
-                dpy.lines(ptsI, 4);
-                //Mensaje
-                dpy.text(290, 450, "-Press Q to exit-");
-                endGame = true;
-            }
-            break;
-            case Message::LOSE:
-            {    
-                dpy.set_color(XLDisplay::RED);
-                dpy.circle(360, 240, 300);
+                    }
+                    break;
+                }   
+                case Message::LOGOUT:
+                {
+                    if(is_old_user)
+                    {
+                        delete *client_Player_Position;
+                        clients_player.erase(client_Player_Position);
+                        std::cout << "Client " << message_Client.nick <<  " logged out succesfully\n";
+                        std::cout << "Cantidad de usuarios: " << clients_player.size() << "\n";
+                    }
+                    else
+                    {
+                        std::cout << "LOGOUT FAIL: Client " << message_Client.nick <<  " is not logged \n";
+                    }
+                    break;
+                }   
 
-                dpy.set_color(XLDisplay::BLACK);
-                // L
-                dpy.line(110, 95, 110, 385);
-                dpy.line(110, 385, 210, 385);
-                // O
-                XPoint ptsO[] = {{230,95},{230,385},{330,385},{330,95},{230,95}};
-                dpy.lines(ptsO, 5);
-                // S
-                XPoint ptsS[] = {{450,95},{350,95},{350,240},{450,240},{450,385},{350,385}};
-                dpy.lines(ptsS, 6);
-                // E
-                XPoint ptsE[] = {{570,95},{470,95},{470,385},{570,385}};
-                dpy.line(470, 240, 570, 240);
-                dpy.lines(ptsE, 4);
-                //Mensaje
-                dpy.text(290, 450, "-Press Q to exit-");
-                endGame = true;
+                case Message::MOVE:
+                {
+                    if(is_old_user)
+                    {
+                        char key = message_Client.message[0];
+                        move_msg(key, *client_Player_Position);
+                    }
+                    else
+                    {
+                        std::cout << "MESSAGE FAIL: Client " << message_Client.nick <<  " is not logged \n";
+                    }
+                    break;
+                }  
+
+                default:
+                std::cout << "Default \n";
+                    break;
             }
-            break;
-            default:
-                break;
         }
-
+        //Update 
+       if(clients_player.size() > 0)
+        {
+            for(auto food = feeding.begin(); food != feeding.end(); food++)
+            {
+                (*food)->Update(dpy);
+            }
+            std::vector<std::vector<Player*>::iterator> dead_Players;
+            for(auto it = clients_player.begin(); it != clients_player.end(); it++)
+            {
+                Player* p = (*it);
+                //No tiene sentido calcular colliding si solo hay un jugador
+                if(clients_player.size() > 1)
+                {
+                    for(auto colliding = clients_player.begin(); colliding != clients_player.end(); colliding++)
+                    {
+                        if(!(*(p->socket()) == *((*colliding)->socket())))
+                        {
+                            if(p->IsColliding(*colliding))
+                            {
+                                //Si entra significa que ha perdido
+                                dead_Players.push_back(it);
+                                (*colliding)->ChangeSize(p->size() + (*colliding)->size());
+                            }
+                        }
+                    }
+                }
+                for(auto food = feeding.begin(); food != feeding.end(); food++)
+                {
+                    if((*food)->IsColliding(p))
+                    {
+                        p->ChangeSize(p->size() + (*food)->size());
+                        Vector2 food_pos = Vector2(std::rand() % (WINDOW_SIZE.x - (*food)->size()*2) + (*food)->size(), 
+                                                   std::rand() % (WINDOW_SIZE.y - (*food)->size()*2) + (*food)->size());
+                        (*food)->Move(food_pos);
+                        (*food)->Update(dpy);
+                    }
+                }
+                if((*it)->size() >= 100) endGame(*it);
+                p->Update(dpy);
+            }
+            for(auto dead_player = dead_Players.begin(); dead_player != dead_Players.end(); dead_player++)
+            {
+                std::vector<Player*>::iterator actual_dead = (*dead_player);
+                Message gameOverMsg(" ", " ");
+                gameOverMsg.type = Message::LOSE;
+                socket.send(gameOverMsg, *((*actual_dead)->socket()));
+                delete *actual_dead;
+                clients_player.erase(actual_dead);
+            }
+            renderPlayers();
+        }
+        dpy->flush();
+        dpy->clear();
     }
 }

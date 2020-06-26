@@ -24,13 +24,15 @@ Player::~Player()
 
 void Player::Update(XLDisplay* dpy)
 {
+    velocity_ =  (size_ - 79) / -7.8;
+    if (velocity_ == 0) velocity_ = 1;
     dpy->set_color(color_);
     dpy->circle(position_.x, position_.y, size_);
 }
 
 bool Player::IsColliding(Player* other_)
 {
-    int colision_zone = (size_ / 2) + (other_->size() / 2);
+    int colision_zone = other_->size() / std::sqrt(2);
     if(std::abs(position_.x - other_->position().x) < colision_zone &&
        std::abs(position_.y - other_->position().y) < colision_zone)
     {

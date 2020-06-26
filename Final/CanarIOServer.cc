@@ -13,30 +13,35 @@ CanarIOServer::~CanarIOServer()
 }
 
 //Movimiento de jugador-------------------------------------------------------------------------------
-void CanarIOServer::move_msg(bool (&keys) [4], Player* p)
+void CanarIOServer::move_msg(char key, Player* p)
 {
     int player_velocity = (p)->velocity();
     Vector2 player_position = (p)->position();
-    std::string s = std::to_string(keys[0]) + std::to_string(keys[1]) +std::to_string(keys[2]) +std::to_string(keys[3]);;
-    std::cout << "Keys: " << s << '\n';
-    if (!keys[0]) 
+    switch (key)
     {
-        player_position.y -= player_velocity;
-    }
-    if (!keys[1]) 
-    {
-        player_position.x -= player_velocity;
-    }
-    if (!keys[2]) 
-    {
-        player_position.y += player_velocity;
-    }
-    if (!keys[3]) 
-    {
-        player_position.x += player_velocity;
-    }     
+     case 'w':
+    case 'W':
+        if(player_position.y - p->size() >= 0) player_position.y -= player_velocity;
         (p)->Move(player_position);
-    renderPlayers();
+        break;
+    case 's':
+    case 'S':
+        if(player_position.y + p->size() <= 480) player_position.y += player_velocity;
+        (p)->Move(player_position);
+        break;
+     case 'a':
+    case 'A':
+        if(player_position.x - p->size() >= 0) player_position.x -= player_velocity;
+        (p)->Move(player_position);
+        break;
+    case 'd':
+    case 'D':
+        if(player_position.x + p->size() <= 720) player_position.x += player_velocity;
+        (p)->Move(player_position);
+        break;
+    default:
+        break;
+    }
 }
 
 //Actualiza la pantalla de los jugadores
@@ -65,7 +70,7 @@ void CanarIOServer::renderPlayers()
             Message drawPlayer((*it)->nickname(), s);
             drawPlayer.type = Message::DRAWPLAYER;
             socket.send(drawPlayer, *((*it)->socket()));
-        }    
+        }
         Message renderPlayers((*it)->nickname(), " ");
         renderPlayers.type = Message::RENDERCALL;
         socket.send(renderPlayers, *((*it)->socket()));
@@ -93,8 +98,6 @@ void CanarIOServer::run()
         
         Socket* client_Socket = nullptr;
         Message message_Client;
-
-        std::cout << "Cantidad de usuarios: " << clients_player.size() << "\n";
 
         int err = socket.recv(message_Client, &client_Socket);
 
@@ -129,6 +132,8 @@ void CanarIOServer::run()
                         Player* new_Player = new Player(pos, (uint16_t)random_Size, (XLDisplay::XLColor)random, client_Socket, message_Client.nick);
                         clients_player.push_back(new_Player);
                         std::cout << "New client " << message_Client.nick <<  " logged succesfully\n";
+                        std::cout << "Cantidad de usuarios: " << clients_player.size() << "\n";
+
                     }
                     break;
                 }   
@@ -139,6 +144,7 @@ void CanarIOServer::run()
                         delete *client_Player_Position;
                         clients_player.erase(client_Player_Position);
                         std::cout << "Client " << message_Client.nick <<  " logged out succesfully\n";
+                        std::cout << "Cantidad de usuarios: " << clients_player.size() << "\n";
                     }
                     else
                     {
@@ -151,13 +157,8 @@ void CanarIOServer::run()
                 {
                     if(is_old_user)
                     {
-                        bool keys [4] = {0, 0, 0, 0};
-                        for(size_t i = 0; i < 4; i++)
-                        {
-                            keys[i] =  message_Client.message[i] - '0';
-                        }
-                      
-                        move_msg(keys, *client_Player_Position);
+                        char key = message_Client.message[0];
+                        move_msg(key, *client_Player_Position);
                     }
                     else
                     {

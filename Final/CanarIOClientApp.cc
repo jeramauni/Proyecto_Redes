@@ -1,8 +1,5 @@
 #include <unistd.h>
 #include "CanarIOClient.h"
-#include <thread>
-
-static CanarIOClient* ec;
 
 extern "C" void * _client_thread(void *arg)
 {
@@ -13,15 +10,10 @@ extern "C" void * _client_thread(void *arg)
     return 0;
 }
 
-void update()
-{
-    ec->update_thread();
-}
-
 int main(int argc, char **argv)
 {
     XLDisplay::init(720, 480, "CanarIO-client");
-    ec = new CanarIOClient(argv[1], argv[2], argv[3]);
+    CanarIOClient ec(argv[1], argv[2], argv[3]);
 
     pthread_attr_t attr;
     pthread_t id;
@@ -30,12 +22,10 @@ int main(int argc, char **argv)
     pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
 
     pthread_create(&id, &attr, _client_thread, static_cast<void *>(&ec));
-
+    
     std::cout << "Logging in...\n";
-    ec->login();
-    //std::thread updatethread(update);
-    //updatethread.detach();
-    ec->input_thread();
-    //updatethread.join();
+    ec.login();
+
+    ec.input_thread();
 }
 

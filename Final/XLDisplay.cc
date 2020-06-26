@@ -1,6 +1,5 @@
 #include "XLDisplay.h"
 #include <stdexcept>
-#include<iostream>
 
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
@@ -56,7 +55,8 @@ void XLDisplay::init(int32_t w, int32_t h, const std::string& t)
 
     XStoreName(xl_dpy, xl_wdw, t.c_str());
 
-XSelectInput(xl_dpy, xl_wdw, StructureNotifyMask | KeyPressMask | KeyReleaseMask); // KeyPressMask
+    XSelectInput(xl_dpy, xl_wdw, StructureNotifyMask | KeyPressMask);
+
     // "Mapea" la ventana en la pantalla y crea el "contexto gráfico" asociado
     XMapWindow(xl_dpy, xl_wdw);
 
@@ -121,10 +121,9 @@ char XLDisplay::wait_key()
 
     while(true)
     {
-        XAutoRepeatOff(xl_dpy);
         XNextEvent(xl_dpy, &event);
-        keyRelased = (event.type == KeyRelease);
-        if (event.type != KeyPress && event.type != KeyRelease)
+
+        if ( event.type != KeyPress )
         {
             continue;
         }

@@ -1,6 +1,8 @@
 #include "CanarIOServer.h"
 #include "Message.h"
 
+const Vector2 WINDOW_SIZE = Vector2(720, 480);
+
 CanarIOServer::CanarIOServer(const char * s, const char * p): socket(s, p)
 {
     socket.bind();
@@ -26,7 +28,7 @@ void CanarIOServer::move_msg(char key, Player* p)
         break;
     case 's':
     case 'S':
-        if(player_position.y + p->size() <= 480) player_position.y += player_velocity;
+        if(player_position.y + p->size() <= WINDOW_SIZE.y) player_position.y += player_velocity;
         (p)->Move(player_position);
         break;
      case 'a':
@@ -36,7 +38,7 @@ void CanarIOServer::move_msg(char key, Player* p)
         break;
     case 'd':
     case 'D':
-        if(player_position.x + p->size() <= 720) player_position.x += player_velocity;
+        if(player_position.x + p->size() <= WINDOW_SIZE.x) player_position.x += player_velocity;
         (p)->Move(player_position);
         break;
     default:
@@ -56,7 +58,7 @@ void CanarIOServer::renderPlayers()
             XLDisplay::XLColor color = (*it3)->color();
             std::string s;
             s = std::to_string(pos.x) + '-' + std::to_string(pos.y) + '-' + std::to_string(size) + '-' + std::to_string(color);
-            Message drawPlayer((*it)->nickname(), s);
+            Message drawPlayer((*it3)->nickname(), s);
             drawPlayer.type = Message::DRAWPLAYER;
             int t = socket.send(drawPlayer, *((*it)->socket()));
         }
@@ -67,7 +69,7 @@ void CanarIOServer::renderPlayers()
             XLDisplay::XLColor color = (*it2)->color();
             std::string s;
             s = std::to_string(pos.x) + '-' + std::to_string(pos.y) + '-' + std::to_string(size) + '-' + std::to_string(color);
-            Message drawPlayer((*it)->nickname(), s);
+            Message drawPlayer((*it2)->nickname(), s);
             drawPlayer.type = Message::DRAWPLAYER;
             socket.send(drawPlayer, *((*it)->socket()));
         }
@@ -77,17 +79,28 @@ void CanarIOServer::renderPlayers()
     }
 }
 
+void CanarIOServer::endGame(Player* winner)
+{
+    for(auto it = clients_player.begin(); it != clients_player.end(); it++)
+    {
+        Message gameOverMsg(" ", " ");
+        if(*((*it)->socket()) == *(winner->socket())) gameOverMsg.type = Message::WIN;
+        else gameOverMsg.type = Message::LOSE;
+        socket.send(gameOverMsg, *((*it)->socket()));   
+    }
+}
+
 //Principal-------------------------------------------------------------------------------
 void CanarIOServer::run()
 {
-    XLDisplay::init(720, 480, "CanarIO-server");
+    XLDisplay::init(WINDOW_SIZE.x, WINDOW_SIZE.y, "CanarIO-server");
     XLDisplay *dpy;
     for(int i = 0; i < 20; i++)
     {
-        //uint16_t food_size = std::rand() % 40 + 5;
-        Vector2 food_pos = Vector2(std::rand() % (720 - 3*2) + 3, 
-                                   std::rand() % (480 - 3*2) + 3);
-        Player* food = new Player(food_pos, 3);
+        int food_size = 3;
+        Vector2 food_pos = Vector2(std::rand() % (WINDOW_SIZE.x - food_size*2) + food_size, 
+                                   std::rand() % (WINDOW_SIZE.y - food_size*2) + food_size);
+        Player* food = new Player(food_pos, food_size);
         feeding.push_back(food);
         food->Update(dpy);
     }
@@ -126,8 +139,7 @@ void CanarIOServer::run()
                     }
                     else {
                         Vector2 pos = Vector2((uint16_t)100, (uint16_t)200 * clients_player.size());
-                        int random = std::rand() % 7;
-                        if(random == 5) random++;
+                        int random = std::rand() % 3;
                         int random_Size = 20;
                         Player* new_Player = new Player(pos, (uint16_t)random_Size, (XLDisplay::XLColor)random, client_Socket, message_Client.nick);
                         clients_player.push_back(new_Player);
@@ -200,8 +212,8 @@ void CanarIOServer::run()
                     if((*food)->IsColliding(p))
                     {
                         p->ChangeSize(p->size() + (*food)->size());
-                        Vector2 food_pos = Vector2(std::rand() % (720 - 3*2) + 3, 
-                                                    std::rand() % (480 - 3*2) + 3);
+                        Vector2 food_pos = Vector2(std::rand() % (WINDOW_SIZE.x - (*food)->size()*2) + (*food)->size(), 
+                                                   std::rand() % (WINDOW_SIZE.y - (*food)->size()*2) + (*food)->size());
                         (*food)->Move(food_pos);
                     }
                 }
@@ -209,14 +221,14 @@ void CanarIOServer::run()
                 {
                     (*food)->Update(dpy);
                 }
-
+                if((*it)->size() >= 100) endGame(*it);
                 p->Update(dpy);
             }
             for(auto dead_player = dead_Players.begin(); dead_player != dead_Players.end(); dead_player++)
             {
                 std::vector<Player*>::iterator actual_dead = (*dead_player);
-                Message gameOverMsg((*actual_dead)->nickname(), " ");
-                gameOverMsg.type = Message::GAMEOVER;
+                Message gameOverMsg(" ", " ");
+                gameOverMsg.type = Message::LOSE;
                 socket.send(gameOverMsg, *((*actual_dead)->socket()));
                 delete *actual_dead;
                 clients_player.erase(actual_dead);

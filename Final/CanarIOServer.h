@@ -19,6 +19,7 @@ public:
     void move_msg(char key, Player* p);
 private:
 void renderPlayers();
+void endGame(Player* winner);
     /**
      *  Lista de clientes conectados al servidor de Chat, representados por
      *  su socket

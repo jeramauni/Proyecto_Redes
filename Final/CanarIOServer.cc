@@ -187,6 +187,10 @@ void CanarIOServer::run()
         //Update 
        if(clients_player.size() > 0)
         {
+            for(auto food = feeding.begin(); food != feeding.end(); food++)
+            {
+                (*food)->Update(dpy);
+            }
             std::vector<std::vector<Player*>::iterator> dead_Players;
             for(auto it = clients_player.begin(); it != clients_player.end(); it++)
             {
@@ -215,11 +219,8 @@ void CanarIOServer::run()
                         Vector2 food_pos = Vector2(std::rand() % (WINDOW_SIZE.x - (*food)->size()*2) + (*food)->size(), 
                                                    std::rand() % (WINDOW_SIZE.y - (*food)->size()*2) + (*food)->size());
                         (*food)->Move(food_pos);
+                        (*food)->Update(dpy);
                     }
-                }
-                for(auto food = feeding.begin(); food != feeding.end(); food++)
-                {
-                    (*food)->Update(dpy);
                 }
                 if((*it)->size() >= 100) endGame(*it);
                 p->Update(dpy);
